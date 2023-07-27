@@ -7,6 +7,7 @@ const bodyParser = require('body-parser')
 const nodemon = require('nodemon')
 
 const url = 'https://kimetsu-no-yaiba.fandom.com/wiki/Kimetsu_no_Yaiba_Wiki'
+const characterUrl = 'https://kimetsu-no-yaiba.fandom.com/wiki/'
 
 // SET UP PROJECT
 const app = express()
@@ -21,7 +22,7 @@ app.use(bodyParser.urlencoded({
 }))
 
 // ROUTES
-// GET ALL CHARACTER 
+    // GET ALL CHARACTER 
 app.get('/v1', (req, resp) => {
     const thumnails = [];
     const limit = Number(req.query.limit);
@@ -50,6 +51,45 @@ app.get('/v1', (req, resp) => {
     }
 })
 
+    // GET A CHARACTER 
+app.get("/v1/:character", (req, resp) => {
+    //console.log(req.params)
+    const inforCharacter = []
+    const titles = []
+    const details = []
+    try {
+        axios(characterUrl + req.params.character).then((res) => {
+            const html = res.data;
+            const $ = cheerio.load(html);
+
+            // GET INFORMATION CHARACTER
+            $("aside", html).each(function() {
+
+                // GET TITLES INFOR CHARACTER
+                $(this).find("section > div > h3").each(function() {
+                    titles.push($(this).text());
+                })
+
+                // GET DETAILS INFOR CHARACTER
+                $(this).find("section > div > div").each(function() {
+                    details.push($(this).text());
+                })
+            })
+        const characterInfor = titles.reduce((character, title, currentIndex) => {
+            return {
+                ...character, 
+                [title]: details[currentIndex]
+            }
+        }, {})
+        inforCharacter.push({...characterInfor})
+        resp.status(200).json(inforCharacter)
+        })
+    } catch (err) {
+        resp.status(500).json(err)
+    }
+})
+
+    
 // PORT
 app.listen(8000, () => {
     console.log('...server is running')
