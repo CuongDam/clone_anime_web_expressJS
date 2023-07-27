@@ -23,7 +23,8 @@ app.use(bodyParser.urlencoded({
 // ROUTES
 // GET ALL CHARACTER 
 app.get('/v1', (req, resp) => {
-    const thumnails = []
+    const thumnails = [];
+    const limit = Number(req.query.limit);
     try {
         axios(url).then((res) => {
             const html = res.data;
@@ -31,7 +32,7 @@ app.get('/v1', (req, resp) => {
             $(".portal", html).each(function() {
                 const name = $(this).find("a").attr("title");
                 const url = $(this).find("a").attr("href");
-                const img = $(this).find("a > img ").attr("data-src")
+                const img = $(this).find("a > img ").attr("data-src");
                 
                 thumnails.push({
                     name: name,
@@ -39,7 +40,10 @@ app.get('/v1', (req, resp) => {
                     img: img
                 })
             })
-            resp.status(200).json(thumnails);
+            if(limit && limit > 0) {
+                resp.status(200).json(thumnails.slice(0, limit))
+            } else
+                resp.status(200).json(thumnails);
         })
     } catch (err) {
         resp.status(500).json(err);
