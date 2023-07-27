@@ -6,6 +6,7 @@ const dotenv = require('dotenv')
 const bodyParser = require('body-parser')
 const nodemon = require('nodemon')
 
+const url = 'https://kimetsu-no-yaiba.fandom.com/wiki/Kimetsu_no_Yaiba_Wiki'
 
 // SET UP PROJECT
 const app = express()
@@ -20,8 +21,29 @@ app.use(bodyParser.urlencoded({
 }))
 
 // ROUTES
+// GET ALL CHARACTER 
 app.get('/v1', (req, resp) => {
-    resp.send('Hello anime')
+    const thumnails = []
+    try {
+        axios(url).then((res) => {
+            const html = res.data;
+            const $ = cheerio.load(html);
+            $(".portal", html).each(function() {
+                const name = $(this).find("a").attr("title");
+                const url = $(this).find("a").attr("href");
+                const img = $(this).find("a > img ").attr("data-src")
+                
+                thumnails.push({
+                    name: name,
+                    url: "http://localhost:8000/v1" + url.split("/wiki")[1],
+                    img: img
+                })
+            })
+            resp.status(200).json(thumnails);
+        })
+    } catch (err) {
+        resp.status(500).json(err);
+    }
 })
 
 // PORT
